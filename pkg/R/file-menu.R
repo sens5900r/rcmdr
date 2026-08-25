@@ -366,7 +366,8 @@ Options <- function(){
   etcMenus <- getRcmdr("etcMenus")
   log.font <- tclvalue(tkfont.actual("RcmdrLogFont"))
   log.font.family <- tclvalue(.Tcl("font actual RcmdrLogFont -family"))
-  if (length(grep(" ", log.font.family)) > 1) log.font.family <- paste("{", log.font.family, "}", sep="")
+  log.font.family <- gsub("[{}]", "", log.font.family)
+  default.font.family <- gsub("[{}]", "", default.font.family)
   title.color <- getRcmdr("title.color")
   # On Windows 7 with Classic theme, a color name is returned instead of RGB values
   if(substr(title.color, 1, 1) != "#") {
@@ -539,8 +540,18 @@ Options <- function(){
                                    resolution=1, orient="horizontal")
   logFontFamilyVar <- tclVar(log.font.family)
   defaultFontFamilyVar <- tclVar(default.font.family)
-  logFontEntry <- ttkentry(fontFrame, width="20", textvariable=logFontFamilyVar)
-  defaultFontEntry <- ttkentry(fontFrame, width="20", textvariable=defaultFontFamilyVar)
+  installed.fonts <- as.character(tkfont.families())
+  installed.fonts <- gsub("[{}]", "", installed.fonts)
+  installed.fonts <- unique(installed.fonts[nzchar(installed.fonts)])
+  installed.fonts <- installed.fonts[!startsWith(installed.fonts, "@")]
+  installed.fonts <- sort(installed.fonts)
+  installed.fonts <- union(c(default.font.family, log.font.family), installed.fonts)
+  installed.fonts <- installed.fonts[nzchar(installed.fonts)]
+  fontComboWidth <- min(40, max(20, nchar(installed.fonts, type="chars")))
+  defaultFontEntry <- ttkcombobox(fontFrame, values=installed.fonts, textvariable=defaultFontFamilyVar,
+                                  state="readonly", width=fontComboWidth)
+  logFontEntry <- ttkcombobox(fontFrame, values=installed.fonts, textvariable=logFontFamilyVar,
+                              state="readonly", width=fontComboWidth)
   rmdTemplateVar <- tclVar(rmd.template)
   templateFrame <- tkframe(outputTab)
   rmdTemplateEntry <- ttkentry(templateFrame, width="75", textvariable=rmdTemplateVar)
