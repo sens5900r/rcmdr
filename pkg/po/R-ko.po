@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: \n"
+"Project-Id-Version: Rcmdr 2.13.0\n"
 "Report-Msgid-Bugs-To: jfox@mcmaster.ca\n"
-"POT-Creation-Date: 2022-07-11 09:30:00\n"
-"PO-Revision-Date: 2022-08-07 21:48+0900\n"
+"POT-Creation-Date: 2026-05-04 00:00:00\n"
+"PO-Revision-Date: 2026-08-25 17:31+0900\n"
 "Last-Translator: Jong-Hwa Shin <shin.jonghwa@modernity.or.kr>\n"
 "Language-Team: Korean R User Group <shin.jonghwa@modernity.or.kr>\n"
 "Language: ko\n"
@@ -12,6 +12,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 2.4.2\n"
+
+msgid "Language"
+msgstr "언어"
+
+msgid "Select a language"
+msgstr "언어 선택"
+
+msgid "to start the R Commander automatically when R starts:"
+msgstr "R이 시작될 때 R Commander를 자동으로 시작하려면:"
+
+msgid "Variance"
+msgstr "분산"
 
 msgid "KMeans Clustering"
 msgstr "K평균 군집화"
@@ -895,6 +907,9 @@ msgstr "로그 높이 (줄)"
 
 msgid "Send output to R Console"
 msgstr "출력물을 R 콘솔로 보내기"
+
+msgid "Side-by-side windows (script left, output right)"
+msgstr "창을 좌우로 나누기(왼쪽 입력, 오른쪽 출력·메시지)"
 
 msgid "Output height (lines)"
 msgstr "출력물 높이 (줄)"
@@ -4382,6 +4397,9 @@ msgstr "R Markdown 문서 편집하기"
 msgid "Edit knitr document"
 msgstr "knitr 문서 편집하기"
 
+msgid "Remove last Markdown block"
+msgstr "마지막 Markdown 블록 제거하기"
+
 msgid "Remove last Markdown command block"
 msgstr "마지막 Markdown 명령어 블록 제거하기"
 
@@ -5147,6 +5165,9 @@ msgstr "변환시킬 변수 선택하기 (하나 이상)"
 
 msgid "Transformation Family"
 msgstr "변환 계열"
+
+msgid "Condition on:"
+msgstr "조건화:"
 
 # new symmetry boxplot (symbox) dialog
 msgid "Symmetry boxplot..."
@@ -5924,6 +5945,24 @@ msgstr ""
 "writes, \n"
 "but you can freely edit between (not within) R \"code blocks.\" Each R code\n"
 "block starts with ```{r} and ends with ```."
+
+# additional message for version 2.8-1, omitted from 2.8-0
+
+msgid "Select row(s) from active data set..."
+msgstr "활성 데이터셋에서 행 선택하기..."
+
+# new messages for statistics table menu
+msgid "Column variable"
+msgstr "열 변수"
+
+msgid "Count variable"
+msgstr "빈도수 변수"
+
+msgid "Row variable"
+msgstr "행 변수"
+
+msgid "Row, and column variables must be differents"
+msgstr "행 변수와 열 변수는 서로 달라야 합니다"
 
 #~ msgid "Dataset"
 #~ msgstr "데이터셋"

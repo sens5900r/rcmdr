@@ -320,6 +320,11 @@ set none, one, several, or all options. The available options are as follows:
     \item{\code{sort.names}}{Set to \code{TRUE} (the default) if you want variable names to be sorted
     alphabetically in variable lists.}
     
+    \item{\code{split.layout}}{If \code{TRUE} (the default), the Commander window is arranged side by side:
+    the script (and Markdown/knitr) notebook on the left, the output and messages windows on the right,
+    with a draggable sash between them. Set to \code{FALSE} to restore the classic stacked layout.
+    This option is ignored when output is sent to the R Console.}
+    
     \item{\code{suppress.icon.images}}{Set to \code{TRUE} to suppress the icon images in dialog OK, Cancel, Reset, and Help buttons;
     the default is \code{FALSE}.}
     

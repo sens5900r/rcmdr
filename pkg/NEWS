@@ -1,5 +1,6 @@
 Changes in version 2.13.0
 
+ o Optional side-by-side Commander layout: script on the left, output and messages on the right (option split.layout; Tools > Options).
  o Added new helps for some dialogs.
  o After loading a plugin active data set and active model are restored
  o Polish translation files updated by Lukasz Daniel

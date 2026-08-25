@@ -377,6 +377,7 @@ Options <- function(){
   use.knitr<- getRcmdr("use.knitr")
   retain.selections <- getRcmdr("retain.selections")
   messages.height <- as.character(getRcmdr("messages.height"))
+  split.layout <- setOption("split.layout", TRUE)
   ask.to.exit <- getRcmdr("ask.to.exit")
   ask.on.exit <- getRcmdr("ask.on.exit")
   attach.data.set <- getRcmdr("attach.data.set")
@@ -417,10 +418,11 @@ Options <- function(){
              initialValues=c(ask.to.exit, ask.on.exit, quit.R.on.close),
              labels=gettextRcmdr("Ask to exit Commander", "Ask to save documents on exit", "Quit R on exit"))
   checkBoxes(outputTab, frame="outputOptionsFrame", 
-             boxes=c("consoleOutput", "logCommands", "numberMessages", "retainMessages", "useMarkdown", "useKnitr"),
-             initialValues=c(console.output, log.commands, number.messages, retain.messages, use.markdown, use.knitr),
+             boxes=c("consoleOutput", "logCommands", "numberMessages", "retainMessages", "useMarkdown", "useKnitr", "splitLayout"),
+             initialValues=c(console.output, log.commands, number.messages, retain.messages, use.markdown, use.knitr, split.layout),
              labels=gettextRcmdr("Send output to R Console", "Log commands to script window", "Number messages", 
-                                 "Retain messages", "Use R Markown", "Use knitr"))
+                                 "Retain messages", "Use R Markown", "Use knitr",
+                                 "Side-by-side windows (script left, output right)"))
   env <- environment()
   hex <- col2hex(c(log.text.color, command.text.color, output.text.color, 
                    error.text.color, warning.text.color, title.color))
@@ -581,6 +583,7 @@ Options <- function(){
     retain.messages <- asLogical(tclvalue(retainMessagesVariable))
     use.markdown <- asLogical(tclvalue(useMarkdownVariable))
     use.knitr<- asLogical(tclvalue(useKnitrVariable))
+    split.layout <- asLogical(tclvalue(splitLayoutVariable))
     rmd.template <- tclvalue(rmdTemplateVar)
     if (rmd.template == rmd.standard) rmd.template <- NULL
     rnw.template <- tclvalue(rnwTemplateVar)
@@ -615,6 +618,7 @@ Options <- function(){
     options$use.markdown <- use.markdown
     options$rmd.template <- rmd.template
     options$use.knitr <- use.knitr
+    options$split.layout <- split.layout
     options$rnw.template <- rnw.template
     options$log.font.family <- log.font.family
     options$default.font.family <- default.font.family

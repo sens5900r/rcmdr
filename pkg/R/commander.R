@@ -187,6 +187,7 @@ setupRcmdrOptions <- function(DESCRIPTION){
                                             else if ((as.numeric(log.height) != 0) || (!getRcmdr("log.commands"))) 2*as.numeric(log.height)
                                             else 20))
     messages.height <- as.character(setOption("messages.height", 4))
+    setOption("split.layout", TRUE)
     setOption("minimum.width", 1000)
     setOption("minimum.height", 400)
     putRcmdr("saveOptions", options(warn=1, contrasts=getRcmdr("default.contrasts"), width=as.numeric(log.width),
@@ -990,9 +991,23 @@ setupGUI <- function(Menus){
     putRcmdr("dataSetLabel", tkbutton(controlsFrame, textvariable=getRcmdr("dataSetName"), foreground="red",
                                       relief="groove", command=selectActiveDataSet, image="::image::dataIcon", compound="left"))
     
+    mainPane <- leftFrame <- rightFrame <- rightPane <- NULL
+    useSplitLayout <- isTRUE(getRcmdr("split.layout")) &&
+        isTRUE(getRcmdr("log.commands")) && !isTRUE(getRcmdr("console.output"))
+    scriptParent <- CommanderWindow()
+    outputParent <- CommanderWindow()
+    if (useSplitLayout) {
+        mainPane <- ttkpanedwindow(CommanderWindow(), orient="horizontal")
+        leftFrame <- ttkframe(mainPane)
+        rightFrame <- ttkframe(mainPane)
+        rightPane <- ttkpanedwindow(rightFrame, orient="vertical")
+        scriptParent <- leftFrame
+        outputParent <- rightPane
+    }
+    
     # script and markdown tabs
-    notebook <- ttknotebook(CommanderWindow())
-    logFrame <- ttkframe(CommanderWindow())    
+    notebook <- ttknotebook(scriptParent)
+    logFrame <- ttkframe(scriptParent)    
     putRcmdr("logWindow", tktext(logFrame, bg="white", foreground=getRcmdr("log.text.color"),
                                  font=getRcmdr("logFont"), height=getRcmdr("log.height"), 
                                  width=getRcmdr("log.width"), wrap="none", undo=TRUE))
@@ -1003,7 +1018,7 @@ setupGUI <- function(Menus){
                                command=function(...) tkyview(.log, ...))
     tkconfigure(.log, xscrollcommand=function(...) tkset(logXscroll, ...))
     tkconfigure(.log, yscrollcommand=function(...) tkset(logYscroll, ...))
-    RmdFrame <- ttkframe(CommanderWindow())
+    RmdFrame <- ttkframe(scriptParent)
     putRcmdr("RmdWindow", tktext(RmdFrame, bg="#FAFAFA", foreground=getRcmdr("log.text.color"),
                                  font=getRcmdr("logFont"), height=getRcmdr("log.height"), 
                                  width=getRcmdr("log.width"), wrap="none", undo=TRUE))
@@ -1041,7 +1056,7 @@ setupGUI <- function(Menus){
     tkconfigure(.rmd, xscrollcommand=function(...) tkset(RmdXscroll, ...))
     tkconfigure(.rmd, yscrollcommand=function(...) tkset(RmdYscroll, ...))    
     
-    RnwFrame <- ttkframe(CommanderWindow())
+    RnwFrame <- ttkframe(scriptParent)
     putRcmdr("RnwWindow", tktext(RnwFrame, bg="#FAFAFA", foreground=getRcmdr("log.text.color"),
                                  font=getRcmdr("logFont"), height=getRcmdr("log.height"), 
                                  width=getRcmdr("log.width"), wrap="none", undo=TRUE))
@@ -1061,7 +1076,7 @@ setupGUI <- function(Menus){
     tkconfigure(.rnw, xscrollcommand=function(...) tkset(RnwXscroll, ...))
     tkconfigure(.rnw, yscrollcommand=function(...) tkset(RnwYscroll, ...))    
     
-    outputFrame <- tkframe(.commander) 
+    outputFrame <- tkframe(outputParent) 
     submitButtonLabel <- tclVar(gettextRcmdr("Submit"))
     submitButton <- if (getRcmdr("console.output"))
         buttonRcmdr(CommanderWindow(), textvariable=submitButtonLabel, borderwidth="2", command=onSubmit,
@@ -1085,7 +1100,7 @@ setupGUI <- function(Menus){
     tkconfigure(.output, xscrollcommand=function(...) tkset(outputXscroll, ...))
     tkconfigure(.output, yscrollcommand=function(...) tkset(outputYscroll, ...))
     # messages window
-    messagesFrame <- tkframe(.commander)
+    messagesFrame <- tkframe(outputParent)
     putRcmdr("messagesWindow", tktext(messagesFrame, bg="lightgray",
                                       font=getRcmdr("logFont"), height=getRcmdr("messages.height"), 
                                       width=getRcmdr("log.width"), wrap="none", undo=TRUE))
@@ -1120,33 +1135,46 @@ setupGUI <- function(Menus){
     if (.log.commands) {
         tkgrid(.log, logYscroll, sticky="news", columnspan=2)
         tkgrid(logXscroll)
-        tkgrid(logFrame, sticky="news", padx=10, pady=0, columnspan=2)
         tkgrid(.rmd, RmdYscroll, sticky="news", columnspan=2)
         tkgrid(RmdXscroll)
         tkgrid(.rnw, RnwYscroll, sticky="news", columnspan=2)
         tkgrid(RnwXscroll)
-        if (getRcmdr("use.markdown")) tkgrid(RmdFrame, sticky="news", padx=10, pady=0, columnspan=2)
-        if (getRcmdr("use.knitr")) tkgrid(RnwFrame, sticky="news", padx=10, pady=0, columnspan=2)
+        if (!useSplitLayout) {
+            tkgrid(logFrame, sticky="news", padx=10, pady=0, columnspan=2)
+            if (getRcmdr("use.markdown")) tkgrid(RmdFrame, sticky="news", padx=10, pady=0, columnspan=2)
+            if (getRcmdr("use.knitr")) tkgrid(RnwFrame, sticky="news", padx=10, pady=0, columnspan=2)
+        }
     }
     tkadd(notebook, logFrame, text=gettextRcmdr("R Script"), padding=6)
     if (getRcmdr("use.markdown")) tkadd(notebook, RmdFrame, text=gettextRcmdr("R Markdown"), padding=6)
     if (getRcmdr("use.knitr")) tkadd(notebook, RnwFrame, text=gettextRcmdr("knitr Document"), padding=6)
-    # tkgrid(notebook, sticky="news")
     if (.log.commands) {
-        tkgrid(notebook, sticky="news")
+        tkgrid(notebook, sticky="news", padx=if (useSplitLayout) 6 else 0, pady=0)
     }
-#    if (.log.commands && .console.output) tkgrid(submitButton, sticky="w", pady=c(0, 6))
     if (.log.commands && .console.output) tkgrid(submitButton, sticky="e", pady=c(0, 6), padx=c(0, 6))
     tkgrid(labelRcmdr(outputFrame, text=gettextRcmdr("Output"), font="RcmdrOutputMessagesFont", foreground=getRcmdr("title.color")),
            if (.log.commands && !.console.output) submitButton, sticky="sw", pady=c(6, 6))
     tkgrid(.output, outputYscroll, sticky="news", columnspan=2)
     tkgrid(outputXscroll, columnspan=1 + (.log.commands && !.console.output))
-    if (!.console.output) tkgrid(outputFrame, sticky="news", padx=10, pady=0, columnspan=2)
     tkgrid(labelRcmdr(messagesFrame, text=gettextRcmdr("Messages"), font="RcmdrOutputMessagesFont", foreground=getRcmdr("title.color")), 
            sticky="w", pady=c(6, 6))
     tkgrid(.messages, messagesYscroll, sticky="news", columnspan=2)
     tkgrid(messagesXscroll)
-    if (!.console.output) tkgrid(messagesFrame, sticky="news", padx=10, pady=0, columnspan=2) ##rmh & J. Fox
+    if (useSplitLayout) {
+        tkadd(rightPane, outputFrame, weight=3)
+        tkadd(rightPane, messagesFrame, weight=1)
+        tkgrid(rightPane, sticky="news")
+        tkgrid.rowconfigure(rightFrame, 0, weight=1)
+        tkgrid.columnconfigure(rightFrame, 0, weight=1)
+        tkadd(mainPane, leftFrame, weight=1)
+        tkadd(mainPane, rightFrame, weight=1)
+        tkgrid(mainPane, sticky="news")
+        tkgrid.rowconfigure(leftFrame, 0, weight=1)
+        tkgrid.columnconfigure(leftFrame, 0, weight=1)
+    } else {
+        if (!.console.output) tkgrid(outputFrame, sticky="news", padx=10, pady=0, columnspan=2)
+        if (!.console.output) tkgrid(messagesFrame, sticky="news", padx=10, pady=0, columnspan=2) ##rmh & J. Fox
+    }
     tkgrid.configure(logYscroll, sticky="ns")
     tkgrid.configure(logXscroll, sticky="ew")
     tkgrid.configure(RmdYscroll, sticky="ns")
@@ -1160,11 +1188,20 @@ setupGUI <- function(Menus){
     .commander <- CommanderWindow()
     tkgrid.rowconfigure(.commander, 0, weight=0)
     tkgrid.rowconfigure(.commander, 1, weight=1)
-#    tkgrid.rowconfigure(.commander, 2, weight=1)
-    w <- if (.log.commands && !.console.output) 1 else 0
-    tkgrid.rowconfigure(.commander, 2, weight=w)
-    tkgrid.columnconfigure(.commander, 0, weight=1)
-    tkgrid.columnconfigure(.commander, 1, weight=0)
+    if (useSplitLayout) {
+        if (!getRcmdr("suppress.menus")) {
+            tkgrid.rowconfigure(.commander, 0, weight=0)
+            tkgrid.rowconfigure(.commander, 1, weight=1)
+        } else {
+            tkgrid.rowconfigure(.commander, 0, weight=1)
+        }
+        tkgrid.columnconfigure(.commander, 0, weight=1)
+    } else {
+        w <- if (.log.commands && !.console.output) 1 else 0
+        tkgrid.rowconfigure(.commander, 2, weight=w)
+        tkgrid.columnconfigure(.commander, 0, weight=1)
+        tkgrid.columnconfigure(.commander, 1, weight=0)
+    }
     if (.log.commands){
         tkgrid.rowconfigure(logFrame, 0, weight=1)
         tkgrid.rowconfigure(logFrame, 1, weight=0)
@@ -1191,7 +1228,7 @@ setupGUI <- function(Menus){
         tkgrid.columnconfigure(outputFrame, 1, weight=0)
     }
     tkgrid.rowconfigure(messagesFrame, 0, weight=0)
-    tkgrid.rowconfigure(messagesFrame, 1, weight=0)
+    tkgrid.rowconfigure(messagesFrame, 1, weight=if (useSplitLayout) 1 else 0)
     tkgrid.rowconfigure(messagesFrame, 2, weight=0)
     tkgrid.columnconfigure(messagesFrame, 0, weight=1)
     tkgrid.columnconfigure(messagesFrame, 1, weight=0)
