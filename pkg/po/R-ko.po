@@ -5122,13 +5122,13 @@ msgstr "NegativeBinomial 분포 표본"
 # additional messages in version 2.5-0
 # new predictor effect plots dialog
 msgid "Predictor Effect Plots"
-msgstr "Predictor 효과 그림"
+msgstr "예측변수 효과 그림"
 
 msgid "Predictor effect plots..."
-msgstr "Predictor 효과 그림…"
+msgstr "예측변수 효과 그림..."
 
 msgid "Plot all predictor effects?"
-msgstr "모든 predictor 효과를 그릴까요?"
+msgstr "모든 예측변수 효과를 그릴까요?"
 
 # added to index plot dialog
 msgid "Mark by groups"
@@ -5685,7 +5685,7 @@ msgstr "효과 그림:"
 # additional messages in version 2.5-0
 # new predictor effect plots dialog
 msgid "Predictor Effect Plots:"
-msgstr "Predictor 효과 그림:"
+msgstr "예측변수 효과 그림:"
 
 msgid "Transform Response Toward Normality:"
 msgstr "정규성을 향해서 반응(값) 변환시키기:"
