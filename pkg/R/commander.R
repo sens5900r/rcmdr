@@ -203,6 +203,12 @@ setupRcmdrOptions <- function(DESCRIPTION){
     setOption("output.text.color", "darkblue")
     setOption("error.text.color", "red")
     setOption("warning.text.color", "darkgreen")
+    setOption("syntax.highlight", TRUE)
+    setOption("syntax.function.color", "#1A56DB")
+    setOption("syntax.argument.color", "#0B7A3B")
+    setOption("syntax.value.color", "#B15C00")
+    setOption("syntax.keyword.color", "#7B1FA2")
+    setOption("syntax.comment.color", "gray40")
     setOption("prefixes", c("Rcmdr> ", "Rcmdr+ ", "RcmdrMsg: ", "RcmdrMsg+ "))
     setOption("multiple.select.mode", "extended")
     setOption("suppress.X11.warnings",
@@ -1010,7 +1016,8 @@ setupGUI <- function(Menus){
     logFrame <- ttkframe(scriptParent)    
     putRcmdr("logWindow", tktext(logFrame, bg="white", foreground=getRcmdr("log.text.color"),
                                  font=getRcmdr("logFont"), height=getRcmdr("log.height"), 
-                                 width=getRcmdr("log.width"), wrap="none", undo=TRUE))
+                                 width=getRcmdr("log.width"), wrap="none", undo=TRUE,
+                                 spacing1=1, spacing2=1))
     .log <- LogWindow()
     logXscroll <- ttkscrollbar(logFrame, orient="horizontal",
                                command=function(...) tkxview(.log, ...))
@@ -1018,10 +1025,13 @@ setupGUI <- function(Menus){
                                command=function(...) tkyview(.log, ...))
     tkconfigure(.log, xscrollcommand=function(...) tkset(logXscroll, ...))
     tkconfigure(.log, yscrollcommand=function(...) tkset(logYscroll, ...))
+    configureRcmdrScriptHighlight(.log)
+    tkbind(.log, "<<Modified>>", onRcmdrScriptModified)
     RmdFrame <- ttkframe(scriptParent)
     putRcmdr("RmdWindow", tktext(RmdFrame, bg="#FAFAFA", foreground=getRcmdr("log.text.color"),
                                  font=getRcmdr("logFont"), height=getRcmdr("log.height"), 
-                                 width=getRcmdr("log.width"), wrap="none", undo=TRUE))
+                                 width=getRcmdr("log.width"), wrap="none", undo=TRUE,
+                                 spacing1=1, spacing2=1))
     .rmd <- RmdWindow()
     rmd.template <- setOption("rmd.template", 
                               system.file("etc", if (getRcmdr("capabilities")$pandoc) "Rcmdr-RMarkdown-Template.Rmd"
@@ -1054,12 +1064,17 @@ setupGUI <- function(Menus){
     RmdYscroll <- ttkscrollbar(RmdFrame,
                                command=function(...) tkyview(.rmd, ...))
     tkconfigure(.rmd, xscrollcommand=function(...) tkset(RmdXscroll, ...))
-    tkconfigure(.rmd, yscrollcommand=function(...) tkset(RmdYscroll, ...))    
+    tkconfigure(.rmd, yscrollcommand=function(...) tkset(RmdYscroll, ...))
+    configureRcmdrScriptHighlight(.rmd)
+    tkbind(.rmd, "<<Modified>>", onRcmdrRmdModified)
+    tcl(.rmd, "edit", "modified", "0")
+    highlightRcmdrScript(.rmd, kind="rmd")    
     
     RnwFrame <- ttkframe(scriptParent)
     putRcmdr("RnwWindow", tktext(RnwFrame, bg="#FAFAFA", foreground=getRcmdr("log.text.color"),
                                  font=getRcmdr("logFont"), height=getRcmdr("log.height"), 
-                                 width=getRcmdr("log.width"), wrap="none", undo=TRUE))
+                                 width=getRcmdr("log.width"), wrap="none", undo=TRUE,
+                                 spacing1=1, spacing2=1))
     .rnw <- RnwWindow()
     rnw.template <- setOption("rnw.template", 
                               system.file("etc", "Rcmdr-knitr-Template.Rnw", package="Rcmdr"))
@@ -1074,7 +1089,11 @@ setupGUI <- function(Menus){
     RnwYscroll <- ttkscrollbar(RnwFrame,
                                command=function(...) tkyview(.rnw, ...))
     tkconfigure(.rnw, xscrollcommand=function(...) tkset(RnwXscroll, ...))
-    tkconfigure(.rnw, yscrollcommand=function(...) tkset(RnwYscroll, ...))    
+    tkconfigure(.rnw, yscrollcommand=function(...) tkset(RnwYscroll, ...))
+    configureRcmdrScriptHighlight(.rnw)
+    tkbind(.rnw, "<<Modified>>", onRcmdrRnwModified)
+    tcl(.rnw, "edit", "modified", "0")
+    highlightRcmdrScript(.rnw, kind="rnw")    
     
     outputFrame <- tkframe(outputParent) 
     submitButtonLabel <- tclVar(gettextRcmdr("Submit"))
@@ -1091,7 +1110,8 @@ setupGUI <- function(Menus){
     })
     putRcmdr("outputWindow", tktext(outputFrame, bg="white", foreground=getRcmdr("output.text.color"),
                                     font=getRcmdr("logFont"), height=getRcmdr("output.height"), 
-                                    width=getRcmdr("log.width"), wrap="none", undo=TRUE))
+                                    width=getRcmdr("log.width"), wrap="none", undo=TRUE,
+                                    spacing1=1, spacing2=1))
     .output <- OutputWindow()
     outputXscroll <- ttkscrollbar(outputFrame, orient="horizontal",
                                   command=function(...) tkxview(.output, ...))

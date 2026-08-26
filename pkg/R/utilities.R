@@ -1863,6 +1863,127 @@ CommanderWindow <- function() getRcmdr("commanderWindow")
 #' @export
 LogWindow <- function() getRcmdr("logWindow")
 
+configureRcmdrScriptHighlight <- function(widget){
+    tktag.configure(widget, "r.function", foreground=getRcmdr("syntax.function.color"))
+    tktag.configure(widget, "r.argument", foreground=getRcmdr("syntax.argument.color"))
+    tktag.configure(widget, "r.string", foreground=getRcmdr("syntax.value.color"))
+    tktag.configure(widget, "r.number", foreground=getRcmdr("syntax.value.color"))
+    tktag.configure(widget, "r.keyword", foreground=getRcmdr("syntax.keyword.color"))
+    tktag.configure(widget, "r.comment", foreground=getRcmdr("syntax.comment.color"))
+    tcl(widget, "tag", "raise", "r.string")
+    tcl(widget, "tag", "raise", "r.comment")
+    tcl(widget, "tag", "raise", "sel")
+}
+
+markCharRanges <- function(active, starts, lengths, n){
+    if (length(starts) == 0L || starts[1] == -1L) return(active)
+    for (i in seq_along(starts)) {
+        start <- starts[i]
+        end <- start + lengths[i] - 1L
+        if (start < 1L || end < start) next
+        end <- min(end, n)
+        active[start:end] <- TRUE
+    }
+    active
+}
+
+rCodeMask <- function(text, kind=c("r", "rmd", "rnw")){
+    kind <- match.arg(kind)
+    n <- nchar(text, type="chars")
+    if (kind == "r") return(rep(TRUE, n))
+    active <- logical(n)
+    if (kind == "rmd") {
+        opens <- gregexpr("```+\\{[rR][^\\n]*\\}\\r?\\n", text, perl=TRUE)[[1]]
+        if (opens[1] != -1L) {
+            olens <- attr(opens, "match.length")
+            for (i in seq_along(opens)) {
+                body.start <- opens[i] + olens[i]
+                tail <- substring(text, body.start, n)
+                close.at <- regexpr("```+", tail, perl=TRUE)
+                body.end <- if (close.at[1] == -1L) n else body.start + close.at[1] - 2L
+                if (body.start <= body.end) active[body.start:body.end] <- TRUE
+            }
+        }
+        inline <- gregexpr("`r\\s+([^`]+)`", text, perl=TRUE)[[1]]
+        if (inline[1] != -1L) {
+            cap.start <- attr(inline, "capture.start")
+            cap.length <- attr(inline, "capture.length")
+            if (!is.null(cap.start)) active <- markCharRanges(active, as.vector(cap.start), as.vector(cap.length), n)
+        }
+    } else {
+        opens <- gregexpr("<<[^\\n]*>>=\\r?\\n", text, perl=TRUE)[[1]]
+        if (opens[1] != -1L) {
+            olens <- attr(opens, "match.length")
+            for (i in seq_along(opens)) {
+                body.start <- opens[i] + olens[i]
+                tail <- substring(text, body.start, n)
+                close.at <- regexpr("(?m)^@", tail, perl=TRUE)
+                body.end <- if (close.at[1] == -1L) n else body.start + close.at[1] - 2L
+                if (body.start <= body.end) active[body.start:body.end] <- TRUE
+            }
+        }
+        sexpr <- gregexpr("\\\\Sexpr\\{([^}]*)\\}", text, perl=TRUE)[[1]]
+        if (sexpr[1] != -1L) {
+            cap.start <- attr(sexpr, "capture.start")
+            cap.length <- attr(sexpr, "capture.length")
+            if (!is.null(cap.start)) active <- markCharRanges(active, as.vector(cap.start), as.vector(cap.length), n)
+        }
+    }
+    active
+}
+
+highlightRcmdrScript <- function(widget, kind=c("r", "rmd", "rnw")){
+    kind <- match.arg(kind)
+    tags <- c("r.comment", "r.string", "r.number", "r.keyword", "r.argument", "r.function")
+    for (tag in tags) tktag.remove(widget, tag, "1.0", "end")
+    if (!isTRUE(getRcmdr("syntax.highlight"))) return(invisible(NULL))
+    text <- tclvalue(tkget(widget, "1.0", "end-1c"))
+    if (!nzchar(text)) return(invisible(NULL))
+    n <- nchar(text, type="chars")
+    active <- rCodeMask(text, kind=kind)
+    covered <- logical(n)
+    addMatches <- function(pattern, tag){
+        matches <- gregexpr(pattern, text, perl=TRUE)[[1]]
+        if (length(matches) == 0L || matches[1] == -1L) return()
+        lengths <- attr(matches, "match.length")
+        for (i in seq_along(matches)) {
+            start <- matches[i]
+            end <- start + lengths[i] - 1L
+            if (start < 1L || end < start || end > n) next
+            if (any(!active[start:end])) next
+            if (any(covered[start:end])) next
+            tktag.add(widget, tag,
+                      paste0("1.0 + ", start - 1L, " chars"),
+                      paste0("1.0 + ", end, " chars"))
+            covered[start:end] <<- TRUE
+        }
+    }
+    addMatches('"(?:\\\\.|[^"\\\\])*"', "r.string")
+    addMatches("'(?:\\\\.|[^'\\\\])*'", "r.string")
+    addMatches("#[^\n]*", "r.comment")
+    addMatches("(?<![A-Za-z0-9._])(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?(?![A-Za-z0-9._])", "r.number")
+    addMatches(paste0("(?<![A-Za-z0-9._])(?:",
+                      "if|else|for|while|repeat|function|in|next|break|",
+                      "TRUE|FALSE|NULL|NA|NA_integer_|NA_real_|NA_character_|NA_complex_|Inf|NaN",
+                      ")(?![A-Za-z0-9._])"), "r.keyword")
+    addMatches("(?<![A-Za-z0-9._])[.A-Za-z][A-Za-z0-9._]*(?=\\s*=(?!=))", "r.argument")
+    addMatches("(?<![A-Za-z0-9._])[.A-Za-z][A-Za-z0-9._]*(?=\\s*\\()", "r.function")
+    invisible(NULL)
+}
+
+onRcmdrTextModified <- function(widget, kind=c("r", "rmd", "rnw")){
+    kind <- match.arg(kind)
+    if (is.null(widget)) return()
+    modified <- tryCatch(tclvalue(tcl(widget, "edit", "modified")), error=function(e) "0")
+    if (!identical(as.character(modified), "1")) return()
+    tcl(widget, "edit", "modified", "0")
+    highlightRcmdrScript(widget, kind=kind)
+}
+
+onRcmdrScriptModified <- function() onRcmdrTextModified(LogWindow(), kind="r")
+onRcmdrRmdModified <- function() onRcmdrTextModified(RmdWindow(), kind="rmd")
+onRcmdrRnwModified <- function() onRcmdrTextModified(RnwWindow(), kind="rnw")
+
 #' @export
 RmdWindow <- function() getRcmdr("RmdWindow")
 
@@ -3338,6 +3459,18 @@ RcmdrEditor <- function(buffer, title="R Commander Editor", ok,
   tkconfigure(editor, yscrollcommand = function(...) tkset(editorYscroll,
                                                            ...))
   tkinsert(editor, "1.0", buffer)
+  if (title == "Edit R Markdown document") {
+      configureRcmdrScriptHighlight(editor)
+      tkbind(editor, "<<Modified>>", function() onRcmdrTextModified(editor, kind="rmd"))
+      tcl(editor, "edit", "modified", "0")
+      highlightRcmdrScript(editor, kind="rmd")
+  }
+  if (title == "Edit knitr document") {
+      configureRcmdrScriptHighlight(editor)
+      tkbind(editor, "<<Modified>>", function() onRcmdrTextModified(editor, kind="rnw"))
+      tcl(editor, "edit", "modified", "0")
+      highlightRcmdrScript(editor, kind="rnw")
+  }
   onOK <- function(){
     if (title == "Edit R Markdown document") putRcmdr("Markdown.editor.open", FALSE)
     if (title == "Edit knitr document") putRcmdr("knitr.editor.open", FALSE)

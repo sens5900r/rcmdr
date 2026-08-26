@@ -1,5 +1,7 @@
 Changes in version 2.13.0
 
+ o Color R tokens in the Script, R Markdown, and knitr windows (functions, arguments, values, keywords, comments).
+ o Increase script and output window line spacing (Tk spacing1 and spacing2 set to 1 pixel).
  o Font family options list installed fonts for selection instead of requiring typed names.
  o Optional side-by-side Commander layout: script on the left, output and messages on the right (option split.layout; Tools > Options).
  o Added new helps for some dialogs.
